@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 98 Chat Room</title>
+    <style>
+        /* Windows 98 Theme */
+        body {
+            font-family: "MS Sans Serif", sans-serif;
+            background-color: #008080;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #chat-container {
+            width: 400px;
+            background: #C0C0C0;
+            padding: 10px;
+            border: 2px solid #808080;
+            box-shadow: 3px 3px #404040;
+            text-align: center;
+        }
+
+        h2 {
+            background: #000080;
+            color: white;
+            padding: 5px;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+            border: 2px solid #808080;
+            background: #E0E0E0;
+            font-size: 12px;
+        }
+
+        button {
+            background: #C0C0C0;
+            border: 2px solid #808080;
+            cursor: pointer;
+        }
+
+        button:active {
+            box-shadow: inset 2px 2px #404040;
+        }
+
+        #chat-box {
+            height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 2px inset #808080;
+            padding: 5px;
+            text-align: left;
+        }
+
+        p {
+            background: #E0E0E0;
+            padding: 3px;
+            border: 1px solid #808080;
+        }
+
+        #online-users {
+            font-size: 12px;
+            margin: 10px 0;
+            text-align: left;
+        }
+
+        .user-list {
+            background: white;
+            border: 1px solid #808080;
+            padding: 5px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .online-indicator {
+            color: green;
+            font-weight: bold;
+        }
+
+        #copyright {
+            margin-top: 10px;
+            font-size: 10px;
+            color: #404040;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+
+    <div id="chat-container">
+        <h2>Windows 98 Chat Room</h2>
+        <p>Online Users: <span id="online-count" class="online-indicator">🟢 0</span></p>
+        <div id="online-users" class="user-list"></div>
+
+        <input type="text" id="username" placeholder="Enter your name">
+        <select id="gender">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+        <input type="number" id="age" placeholder="Enter your age">
+
+        <!-- Country Dropdown -->
+        <select id="country">
+            <option value="">Select Country</option>
+            <option value="USA">USA</option>
+            <option value="Canada">Canada</option>
+            <option value="UK">UK</option>
+            <option value="India">India</option>
+            <option value="Germany">Germany</option>
+            <option value="France">France</option>
+            <option value="Australia">Australia</option>
+            <option value="Japan">Japan</option>
+            <option value="China">China</option>
+            <option value="Russia">Russia</option>
+        </select>
+
+        <input type="text" id="message" placeholder="Type a message">
+        <button onclick="sendMessage()">Send</button>
+
+        <div id="chat-box"></div>
+        
+        <p id="copyright">© 2025 chatx.world. All rights reserved.</p>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAdcDHqdfC-3xM6TsXJ-1W0zeXnRK7S10w",
+            authDomain: "onlinechatting-b826a.firebaseapp.com",
+            databaseURL: "https://onlinechatting-b826a-default-rtdb.firebaseio.com",
+            projectId: "onlinechatting-b826a",
+            storageBucket: "onlinechatting-b826a.firebasestorage.app",
+            messagingSenderId: "612556351893",
+            appId: "1:612556351893:web:e0039a82f2d9c60bcfee9c",
+            measurementId: "G-7R3ZCSXYLT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const chatRef = db.ref("chats");
+        const usersRef = db.ref("users");
+
+        function sendMessage() {
+            const name = document.getElementById("username").value.trim();
+            const gender = document.getElementById("gender").value;
+            const age = document.getElementById("age").value.trim();
+            const country = document.getElementById("country").value;
+            let message = document.getElementById("message").value.trim();
+
+            if (!name || !gender || !age || !country || !message) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            // Moderation - Block bad words
+            const bannedWords = ["badword1", "badword2", "badword3"]; // Add more words
+            for (let word of bannedWords) {
+                if (message.toLowerCase().includes(word)) {
+                    alert("Inappropriate language detected!");
+                    return;
+                }
+            }
+
+            const time = new Date().toLocaleTimeString();
+
+            chatRef.push({
+                name, gender, age, country, message, timestamp: time
+            });
+
+            document.getElementById("message").value = "";
+        }
+
+        // Display Messages
+        chatRef.on("child_added", snapshot => {
+            const data = snapshot.val();
+            const chatBox = document.getElementById("chat-box");
+            const messageElement = document.createElement("p");
+
+            messageElement.innerHTML = `<strong>${data.name} (${data.age}, ${data.gender}, ${data.country}) [${data.timestamp}]:</strong> ${data.message}`;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        // Track Online Users
+        function trackUserPresence() {
+            const userId = `user_${Math.random().toString(36).substr(2, 9)}`;
+            const userRef = usersRef.child(userId);
+
+            userRef.set({ online: true });
+            userRef.onDisconnect().remove();
+
+            usersRef.on("value", snapshot => {
+                const users = snapshot.val();
+                const onlineUsers = Object.keys(users || {}).length;
+
+                document.getElementById("online-count").innerText = `🟢 ${onlineUsers}`;
+            });
+        }
+
+        trackUserPresence();
+    </script>
+
+</body>
+</html>
