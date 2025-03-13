@@ -12,6 +12,7 @@
             color: black;
             margin: 0;
             padding: 0;
+            text-align: center;
         }
 
         .container {
@@ -22,16 +23,18 @@
             border: 3px solid #808080;
             padding: 15px;
             box-shadow: 3px 3px 10px #404040;
+            text-align: left;
         }
 
         header {
-            background: #008080;
+            background: linear-gradient(to right, #008080, #006666);
             color: white;
             padding: 15px;
             text-align: center;
             font-size: 22px;
             font-weight: bold;
             border-bottom: 2px solid #808080;
+            text-shadow: 2px 2px 3px black;
         }
 
         nav {
@@ -51,10 +54,12 @@
             background-color: #D0D0D0;
             border: 2px solid #808080;
             box-shadow: 2px 2px 5px #606060;
+            transition: all 0.2s ease-in-out;
         }
 
         nav a:hover {
             background-color: #B0B0B0;
+            transform: scale(1.05);
         }
 
         .main-content {
@@ -64,9 +69,20 @@
         .window-98 {
             background-color: #D0D0D0;
             border: 2px solid #808080;
-            padding: 12px;
-            margin-top: 10px;
+            padding: 15px;
+            margin-top: 15px;
             box-shadow: 2px 2px 5px #606060;
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background-color: #A0A0A0;
+            padding: 5px;
+            border-bottom: 2px solid #808080;
+            text-align: center;
         }
 
         footer {
@@ -76,12 +92,16 @@
             padding: 10px;
             margin-top: 20px;
             border-top: 2px solid #808080;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px black;
         }
 
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
+        ul {
+            padding-left: 20px;
+        }
+
+        ul li {
+            margin-bottom: 8px;
         }
 
         @media (max-width: 768px) {
@@ -99,7 +119,7 @@
 <body>
 
     <div class="container">
-        <header>About Chatx.world</header>
+        <header>🌐 About Chatx.world</header>
 
         <nav>
             <a href="index.html">🏠 Home</a>
@@ -108,71 +128,57 @@
         <div class="main-content">
             <div class="window-98">
                 <h3 class="section-title">🌍 What is Chatx.world?</h3>
-                <p>Chatx.world is an **anonymous chatroom** built for people who love to chat freely with strangers without the hassle of registration. Inspired by the classic **Windows 98** aesthetic, it brings a nostalgic touch to modern chatting.</p>
-                <p>Whether you want to meet new people, engage in meaningful conversations, or simply relive the retro computing days, Chatx.world provides the perfect platform.</p>
+                <p>Chatx.world is an **anonymous chatroom** designed for people who love chatting freely with strangers—**no sign-ups, no personal data, just pure conversation**.</p>
+                <p>With a **Windows 98-inspired design**, it brings back the **nostalgic feel** of early internet chatrooms.</p>
             </div>
 
             <div class="window-98">
                 <h3 class="section-title">💡 Why Was Chatx.world Created?</h3>
-                <p>In today's digital world, most chat platforms require **sign-ups, personal data, and even payment for premium features**. We wanted to create something different—something that brings back the simplicity of online chatting.</p>
-                <p>With Chatx.world, **no accounts, no sign-ups, and no personal data** are needed. You just pick a nickname and start chatting instantly. It's as simple as it used to be in the old days!</p>
+                <p>Most chat platforms today require **sign-ups, emails, and even payment for premium features**. Chatx.world takes a different approach—offering **instant access with no hassle**.</p>
+                <p>Here, all you need to do is **pick a nickname and start chatting.** No tracking, no ads, just real conversations.</p>
             </div>
 
             <div class="window-98">
                 <h3 class="section-title">💬 Features of Chatx.world</h3>
                 <ul>
-                    <li>🔹 **100% Anonymous** – No registration, no sign-ups.</li>
-                    <li>🔹 **Real-time Chat** – Messages are delivered instantly.</li>
-                    <li>🔹 **Live User Count** – See how many users are online.</li>
-                    <li>🔹 **Permanent Messages** – No messages are ever deleted.</li>
-                    <li>🔹 **Nostalgic Windows 98 Theme** – Aesthetic retro design.</li>
-                    <li>🔹 **Safe & Moderated** – A clean and friendly chatroom.</li>
-                </ul>
-            </div>
-
-            <div class="window-98">
-                <h3 class="section-title">🔧 How Does It Work?</h3>
-                <p>Using Chatx.world is incredibly easy! Here’s a step-by-step guide:</p>
-                <ul>
-                    <li>1️⃣ **Enter a nickname** (no need for emails or passwords).</li>
-                    <li>2️⃣ **Join the chatroom** instantly and start chatting.</li>
-                    <li>3️⃣ **See how many users** are currently online.</li>
-                    <li>4️⃣ **Engage in real-time conversations** with strangers.</li>
-                    <li>5️⃣ **Your chat history stays**—nothing gets deleted!</li>
+                    <li>🔹 **100% Anonymous** – No registration needed.</li>
+                    <li>🔹 **Real-time Chat** – Instant message delivery.</li>
+                    <li>🔹 **Live User Count** – See how many people are online.</li>
+                    <li>🔹 **Permanent Messages** – Messages stay forever.</li>
+                    <li>🔹 **Retro Windows 98 Theme** – Brings back old-school vibes.</li>
+                    <li>🔹 **Safe & Moderated** – No spam, no abuse.</li>
                 </ul>
             </div>
 
             <div class="window-98">
                 <h3 class="section-title">🚀 Our Mission</h3>
-                <p>Our mission is to create a **fun, safe, and nostalgic** chat experience where people can interact with strangers freely. We prioritize:</p>
+                <p>Chatx.world aims to create a **fun, safe, and nostalgic** chat experience. We prioritize:</p>
                 <ul>
-                    <li>✅ **Privacy** – No data collection, no tracking.</li>
-                    <li>✅ **Security** – A moderated chatroom for a safe experience.</li>
-                    <li>✅ **Simplicity** – Just click, chat, and connect.</li>
+                    <li>✅ **Privacy** – No tracking, no data collection.</li>
+                    <li>✅ **Security** – A safe space for all users.</li>
+                    <li>✅ **Simplicity** – One-click access to real conversations.</li>
                 </ul>
-                <p>We want to revive the **classic era of internet chatting** and bring people together in a free and open environment.</p>
+                <p>Bringing back the **golden age of chatting!**</p>
             </div>
 
             <div class="window-98">
                 <h3 class="section-title">⚠️ Chat Safety Guidelines</h3>
-                <p>Although Chatx.world is anonymous, safety is our top priority. Here are some key guidelines:</p>
+                <p>To keep Chatx.world safe and fun for everyone, follow these simple rules:</p>
                 <ul>
-                    <li>🚫 Never share **personal information** (real name, phone number, address, etc.).</li>
-                    <li>🔞 Do not post **explicit, violent, or offensive content.**</li>
-                    <li>🚷 No bullying, harassment, or spamming allowed.</li>
-                    <li>❌ Users who violate the rules will be **permanently banned**.</li>
+                    <li>🚫 **No sharing of personal information** (real name, address, etc.).</li>
+                    <li>🔞 **No explicit or offensive content.**</li>
+                    <li>🚷 **No bullying, spamming, or harassment.**</li>
+                    <li>❌ **Violators will be permanently banned.**</li>
                 </ul>
-                <p>By following these rules, we can keep Chatx.world **fun and friendly** for everyone!</p>
             </div>
 
             <div class="window-98">
                 <h3 class="section-title">💻 Technologies Behind Chatx.world</h3>
-                <p>We use **modern web technologies** while maintaining a classic design:</p>
                 <ul>
-                    <li>🖥️ **HTML, CSS, and JavaScript** for the front-end.</li>
-                    <li>🔥 **Firebase** for real-time chat functionality.</li>
-                    <li>🌍 **WebSockets** to ensure instant messaging.</li>
-                    <li>🔐 **Moderation tools** to keep the chat safe.</li>
+                    <li>🖥️ **Frontend:** HTML, CSS, JavaScript</li>
+                    <li>🔥 **Backend:** Firebase for real-time chat</li>
+                    <li>🌍 **Live Messaging:** WebSockets</li>
+                    <li>🔐 **Security:** Moderation tools for safe chatting</li>
                 </ul>
             </div>
 
