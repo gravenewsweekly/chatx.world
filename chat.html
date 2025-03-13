@@ -15,7 +15,6 @@
             align-items: center;
             height: 100vh;
         }
-
         #chat-container {
             width: 400px;
             background: #C0C0C0;
@@ -24,7 +23,6 @@
             box-shadow: 3px 3px #404040;
             text-align: center;
         }
-
         h2 {
             background: #000080;
             color: white;
@@ -32,7 +30,6 @@
             margin: 0;
             font-size: 14px;
         }
-
         input, select, button {
             width: 100%;
             padding: 5px;
@@ -41,17 +38,14 @@
             background: #E0E0E0;
             font-size: 12px;
         }
-
         button {
             background: #C0C0C0;
             border: 2px solid #808080;
             cursor: pointer;
         }
-
         button:active {
             box-shadow: inset 2px 2px #404040;
         }
-
         #chat-box {
             height: 300px;
             overflow-y: auto;
@@ -60,19 +54,16 @@
             padding: 5px;
             text-align: left;
         }
-
         p {
             background: #E0E0E0;
             padding: 3px;
             border: 1px solid #808080;
         }
-
         #online-users {
             font-size: 12px;
             margin: 10px 0;
             text-align: left;
         }
-
         .user-list {
             background: white;
             border: 1px solid #808080;
@@ -80,16 +71,31 @@
             max-height: 100px;
             overflow-y: auto;
         }
-
         .online-indicator {
             color: green;
             font-weight: bold;
         }
-
         #copyright {
             margin-top: 10px;
             font-size: 10px;
             color: #404040;
+        }
+        .message-actions {
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .message-actions button {
+            padding: 2px 5px;
+            font-size: 10px;
+        }
+        .edit-input {
+            width: 80%;
+            padding: 2px;
+            font-size: 12px;
+        }
+        .deleted-message {
+            color: #808080;
+            font-style: italic;
         }
     </style>
     <!-- Firebase SDK -->
@@ -97,7 +103,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
-
     <div id="chat-container">
         <h2>Windows 98 Chat Room</h2>
         <p>Online Users: <span id="online-count" class="online-indicator">🟢 0</span></p>
@@ -110,8 +115,6 @@
             <option value="Female">Female</option>
         </select>
         <input type="number" id="age" placeholder="Enter your age">
-
-        <!-- Country Dropdown -->
         <select id="country">
             <option value="">Select Country</option>
             <option value="USA">USA</option>
@@ -125,12 +128,10 @@
             <option value="China">China</option>
             <option value="Russia">Russia</option>
         </select>
-
         <input type="text" id="message" placeholder="Type a message">
         <button onclick="sendMessage()">Send</button>
 
         <div id="chat-box"></div>
-        
         <p id="copyright">© 2025 chatx.world. All rights reserved.</p>
     </div>
 
@@ -153,7 +154,40 @@
 
         const chatRef = db.ref("chats");
         const usersRef = db.ref("users");
+        const bannedIPsRef = db.ref("bannedIPs");
 
+        // List of banned words
+        const bannedWords = [
+            "sex", "fuck", "bitch", "ass", "sex",
+            "porn", "xxx", "sexy", "nazi", "terror",
+            "bomb", "asshole", "asswipe", "BDSM", " online sex",
+            "daddy", "madarchod", "gaand", "rape", "violence",
+            "murder", "drugs", "terrorist", "kill", "selfharm","abuse","selfharm","racism", "sexually", "sexual", "pornographic"
+        ];
+
+        // Track user IP
+        let userIP = "";
+
+        // Fetch user IP
+        fetch("https://api.ipify.org?format=json")
+            .then(response => response.json())
+            .then(data => {
+                userIP = data.ip;
+                checkIfBanned();
+            });
+
+        // Check if user is banned
+        function checkIfBanned() {
+            bannedIPsRef.once("value", snapshot => {
+                const bannedIPs = snapshot.val();
+                if (bannedIPs && bannedIPs.includes(userIP)) {
+                    alert("You are banned from this chat.");
+                    window.location.href = "about:blank"; // Redirect banned users
+                }
+            });
+        }
+
+        // Send message
         function sendMessage() {
             const name = document.getElementById("username").value.trim();
             const gender = document.getElementById("gender").value;
@@ -167,10 +201,11 @@
             }
 
             // Moderation - Block bad words
-            const bannedWords = ["badword1", "badword2", "badword3"]; // Add more words
             for (let word of bannedWords) {
                 if (message.toLowerCase().includes(word)) {
                     alert("Inappropriate language detected!");
+                    bannedIPsRef.push(userIP); // Ban user IP
+                    window.location.href = "about:blank"; // Redirect banned users
                     return;
                 }
             }
@@ -178,7 +213,7 @@
             const time = new Date().toLocaleTimeString();
 
             chatRef.push({
-                name, gender, age, country, message, timestamp: time
+                name, gender, age, country, message, timestamp: time, ip: userIP
             });
 
             document.getElementById("message").value = "";
@@ -190,10 +225,61 @@
             const chatBox = document.getElementById("chat-box");
             const messageElement = document.createElement("p");
 
-            messageElement.innerHTML = `<strong>${data.name} (${data.age}, ${data.gender}, ${data.country}) [${data.timestamp}]:</strong> ${data.message}`;
+            messageElement.innerHTML = `
+                <strong>${data.name} (${data.age}, ${data.gender}, ${data.country}) [${data.timestamp}]:</strong> 
+                <span class="message-text">${data.message}</span>
+                <div class="message-actions">
+                    <button onclick="editMessage('${snapshot.key}', '${data.ip}')">Edit</button>
+                    <button onclick="deleteMessage('${snapshot.key}', '${data.ip}')">Delete</button>
+                </div>
+            `;
+            messageElement.setAttribute("data-key", snapshot.key);
             chatBox.appendChild(messageElement);
             chatBox.scrollTop = chatBox.scrollHeight;
         });
+
+        // Edit Message
+        function editMessage(messageId, messageIP) {
+            if (messageIP !== userIP) {
+                alert("You can only edit your own messages.");
+                return;
+            }
+
+            const messageElement = document.querySelector(`[data-key="${messageId}"]`);
+            const messageText = messageElement.querySelector(".message-text").innerText;
+
+            const editInput = document.createElement("input");
+            editInput.type = "text";
+            editInput.className = "edit-input";
+            editInput.value = messageText;
+
+            const saveButton = document.createElement("button");
+            saveButton.innerText = "Save";
+            saveButton.onclick = () => {
+                const newMessage = editInput.value.trim();
+                if (newMessage) {
+                    chatRef.child(messageId).update({ message: newMessage });
+                }
+            };
+
+            messageElement.innerHTML = "";
+            messageElement.appendChild(editInput);
+            messageElement.appendChild(saveButton);
+        }
+
+        // Delete Message
+        function deleteMessage(messageId, messageIP) {
+            if (messageIP !== userIP) {
+                alert("You can only delete your own messages.");
+                return;
+            }
+
+            if (confirm("Are you sure you want to delete this message?")) {
+                chatRef.child(messageId).remove();
+                const messageElement = document.querySelector(`[data-key="${messageId}"]`);
+                messageElement.innerHTML = `<span class="deleted-message">🚫 This message was deleted.</span>`;
+            }
+        }
 
         // Track Online Users
         function trackUserPresence() {
@@ -213,6 +299,5 @@
 
         trackUserPresence();
     </script>
-
 </body>
 </html>
