@@ -18,20 +18,22 @@
             width: 80%;
             max-width: 900px;
             background-color: #C0C0C0;
-            margin: 20px auto;
+            margin: 30px auto;
             border: 3px solid #808080;
-            padding: 15px;
-            box-shadow: 3px 3px 10px #404040;
+            padding: 20px;
+            box-shadow: 4px 4px 10px #404040;
         }
 
         header {
-            background: #008080;
+            background: #006060;
             color: white;
             padding: 15px;
             text-align: center;
             font-size: 22px;
             font-weight: bold;
-            border-bottom: 2px solid #808080;
+            border-bottom: 3px solid #808080;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         nav {
@@ -50,32 +52,40 @@
             display: inline-block;
             background-color: #D0D0D0;
             border: 2px solid #808080;
-            box-shadow: 2px 2px 5px #606060;
+            box-shadow: 3px 3px 6px #606060;
+            transition: 0.3s;
         }
 
         nav a:hover {
             background-color: #B0B0B0;
+            transform: scale(1.05);
         }
 
         .main-content {
-            padding: 15px;
+            padding: 20px;
         }
 
         .window-98 {
             background-color: #D0D0D0;
             border: 2px solid #808080;
-            padding: 12px;
-            margin-top: 10px;
-            box-shadow: 2px 2px 5px #606060;
+            padding: 15px;
+            margin-top: 12px;
+            box-shadow: 3px 3px 6px #606060;
+            transition: 0.3s;
+        }
+
+        .window-98:hover {
+            background-color: #C8C8C8;
         }
 
         footer {
             background: #004040;
             color: white;
             text-align: center;
-            padding: 10px;
-            margin-top: 20px;
-            border-top: 2px solid #808080;
+            padding: 12px;
+            margin-top: 25px;
+            border-top: 3px solid #808080;
+            font-size: 14px;
         }
 
         .faq-title {
@@ -86,6 +96,17 @@
 
         .faq-answer {
             margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        a {
+            color: #004080;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
@@ -112,52 +133,72 @@
         <div class="main-content">
             <div class="window-98">
                 <h3 class="faq-title">❓ What is Chatx.world?</h3>
-                <p class="faq-answer">Chatx.world is an online chat platform that allows users to connect, chat, and engage in meaningful discussions in real time.</p>
+                <p class="faq-answer">
+                    Chatx.world is a real-time chat platform designed for meaningful conversations, anonymous interactions, and engaging discussions.
+                </p>
             </div>
 
             <div class="window-98">
-                <h3 class="faq-title">💻 Do I need to create an account to use Chatx.world?</h3>
-                <p class="faq-answer">No, you can chat as a guest. However, creating an account allows you to save your username and access additional features.</p>
+                <h3 class="faq-title">💻 Do I need to create an account?</h3>
+                <p class="faq-answer">
+                    No, you can chat as a guest.
+                </p>
             </div>
 
             <div class="window-98">
-                <h3 class="faq-title">🚫 What kind of content is not allowed?</h3>
-                <p class="faq-answer">Hate speech, bullying, explicit content, and spam are strictly prohibited. Please read our <a href="rules.html">Rules</a> page for more details.</p>
+                <h3 class="faq-title">🚫 What content is not allowed?</h3>
+                <p class="faq-answer">
+                    Hate speech, bullying, explicit content, and spam are strictly prohibited. Please refer to our <a href="rules.html">Rules</a> page for full details.
+                </p>
             </div>
 
             <div class="window-98">
                 <h3 class="faq-title">🛠 How do I report a user?</h3>
-                <p class="faq-answer">If a user is violating the rules, email us at <a href="mailto:handedaksh@gmail.com">handedaksh@gmail.com</a> with details such as their username, chatroom name, and screenshots (if available).</p>
+                <p class="faq-answer">
+                    If you encounter a user violating the rules, report them by emailing <a href="mailto:handedaksh@gmail.com">handedaksh@gmail.com</a> with their username, chatroom name, and any supporting screenshots.
+                </p>
             </div>
 
             <div class="window-98">
-                <h3 class="faq-title">🔐 Is my personal information safe?</h3>
-                <p class="faq-answer">Yes! We do not store personal messages, and your data is protected under our <a href="privacy.html">Privacy Policy</a>.</p>
+                <h3 class="faq-title">🔐 Is my personal data secure?</h3>
+                <p class="faq-answer">
+                    Yes! We do not store private messages, and your data is protected under our <a href="privacy.html">Privacy Policy</a>.
+                </p>
             </div>
 
             <div class="window-98">
-                <h3 class="faq-title">📶 Why am I experiencing connection issues?</h3>
-                <p class="faq-answer">Slow internet or server maintenance might be the cause. Try refreshing the page or checking our social media for updates.</p>
+                <h3 class="faq-title">📶 Why am I facing connection issues?</h3>
+                <p class="faq-answer">
+                    Slow internet, server maintenance, or temporary outages could be the cause. Try refreshing the page or checking our social media for updates.
+                </p>
             </div>
 
             <div class="window-98">
                 <h3 class="faq-title">⚙️ Can I customize my chat experience?</h3>
-                <p class="faq-answer">No! You cannot customize your profile, change chat themes .</p>
+                <p class="faq-answer">
+                    No, customization features such as themes and profile changes are not available at this time.
+                </p>
             </div>
 
             <div class="window-98">
-                <h3 class="faq-title">👤 How can I change my username?</h3>
-                <p class="faq-answer">Guests cannot change usernames once they enter a chat.</p>
+                <h3 class="faq-title">👤 Can I change my username?</h3>
+                <p class="faq-answer">
+                    Guest are recommend not to change their usernames , age,sex or country.
+                </p>
             </div>
 
             <div class="window-98">
                 <h3 class="faq-title">❌ How do I delete my account?</h3>
-                <p class="faq-answer">your account cannot be deleted unless IP banned permanently.</p>
+                <p class="faq-answer">
+                    Accounts cannot be deleted unless permanently IP banned.
+                </p>
             </div>
 
             <div class="window-98">
-                <h3 class="faq-title">📧 Still have questions?</h3>
-                <p class="faq-answer">If you need further assistance, feel free to contact us at <a href="mailto:handedaksh@gmail.com">handedaksh@gmail.com</a>.</p>
+                <h3 class="faq-title">📧 Need further assistance?</h3>
+                <p class="faq-answer">
+                    If you have additional questions, feel free to contact us at <a href="mailto:handedaksh@gmail.com">handedaksh@gmail.com</a>.
+                </p>
             </div>
         </div>
 
