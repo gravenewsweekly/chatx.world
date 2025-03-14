@@ -150,6 +150,7 @@
         const chatRef = db.ref("chats");
         const usersRef = db.ref("users");
         const bannedIPsRef = db.ref("bannedIPs");
+        const unbannedIPsRef = db.ref("unbannedIPs");
 
         // List of banned words
         const bannedWords = [
@@ -187,14 +188,29 @@
         function checkIfBanned() {
             bannedIPsRef.once("value", snapshot => {
                 const bannedIPs = snapshot.val();
-                if (bannedIPs && bannedIPs.includes(userIP)) {
+                if (bannedIPs && Object.values(bannedIPs).includes(userIP)) {
                     if (!unbanUsed) {
                         showUnbanOption();
                     } else {
                         alert("You are banned from this chat.");
                         window.location.href = "about:blank"; // Redirect banned users
                     }
+                } else {
+                    checkUnbannedIPs();
                 }
+            });
+        }
+
+        // Check if user is unbanned
+        function checkUnbannedIPs() {
+            unbannedIPsRef.once("value", snapshot => {
+                const unbannedIPs = snapshot.val();
+                if (unbannedIPs && Object.values(unbannedIPs).includes(userIP)) {
+                    unbanUsed = true; // IP has been unbanned before
+                }
+                // Show the send button if the IP is not banned and has been unbanned before
+                document.getElementById("send-button").innerText = "Send";
+                document.getElementById("send-button").onclick = sendMessage;
             });
         }
 
@@ -213,10 +229,12 @@
                     const ipKey = Object.keys(bannedIPs).find(key => bannedIPs[key] === userIP);
                     if (ipKey) {
                         bannedIPsRef.child(ipKey).remove().then(() => {
-                            alert("Your IP has been unbanned. Please follow the chat rules.");
-                            unbanUsed = true;
-                            document.getElementById("send-button").innerText = "Send";
-                            document.getElementById("send-button").onclick = sendMessage;
+                            unbannedIPsRef.push(userIP).then(() => {
+                                alert("Your IP has been unbanned permanently. Please follow the chat rules.");
+                                unbanUsed = true;
+                                document.getElementById("send-button").innerText = "Send";
+                                document.getElementById("send-button").onclick = sendMessage;
+                            });
                         });
                     }
                 });
