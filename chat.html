@@ -88,6 +88,10 @@
             color: red;
             font-weight: bold;
         }
+        .warning-message {
+            color: orange;
+            font-weight: bold;
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -120,7 +124,7 @@
             <option value="Russia">Russia</option>
         </select>
         <input type="text" id="message" placeholder="Type a message">
-        <button onclick="sendMessage()">Send</button>
+        <button id="send-button" onclick="sendMessage()">Send</button>
 
         <div id="chat-box"></div>
         <p id="copyright">© 2025 chatx.world. All rights reserved.</p>
@@ -151,19 +155,22 @@
         const bannedWords = [
             "sex", "fuck", "bitch", "ass", "sex",
             "porn", "xxx", "sexy", "nazi", "terror",
-            "bomb", "asshole", "asswipe", "BDSM", " online sex",
+            "bomb", "asshole", "asswipe", "BDSM", "online sex",
             "daddy", "madarchod", "gaand", "rape", "violence",
-            "murder", "drugs", "terrorist", "kill", "selfharm","abuse","selfharm","racism", "sexually", "sexual", "pornographic"
+            "murder", "drugs", "terrorist", "kill", "selfharm", "abuse", "selfharm", "racism", "sexually", "sexual", "pornographic"
         ];
 
         // List of banned patterns (e.g., links)
         const bannedPatterns = [
-            /http:\/\/|https:\/\/|www\./i // Detects any links
+            /http:\/\/|https:\/\/|www\./i, // Detects any links
+            /\b\d{10}\b/, // Detects phone numbers
+            /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/ // Detects email addresses
         ];
 
         // Anti-spam configuration
         const spamThreshold = 5; // Number of messages within the time limit to consider as spam
         const spamTimeLimit = 60000; // Time limit in milliseconds (e.g., 60 seconds)
+        let unbanUsed = false; // Track if user has used unban option
 
         // Track user IP
         let userIP = "";
@@ -181,10 +188,39 @@
             bannedIPsRef.once("value", snapshot => {
                 const bannedIPs = snapshot.val();
                 if (bannedIPs && bannedIPs.includes(userIP)) {
-                    alert("You are banned from this chat.");
-                    window.location.href = "about:blank"; // Redirect banned users
+                    if (!unbanUsed) {
+                        showUnbanOption();
+                    } else {
+                        alert("You are banned from this chat.");
+                        window.location.href = "about:blank"; // Redirect banned users
+                    }
                 }
             });
+        }
+
+        // Show Unban Option
+        function showUnbanOption() {
+            document.getElementById("send-button").innerText = "Unban IP";
+            document.getElementById("send-button").onclick = unbanIP;
+        }
+
+        // Unban IP
+        function unbanIP() {
+            const confirmUnban = confirm("You can unban your IP only once. Are you sure you want to proceed?");
+            if (confirmUnban) {
+                bannedIPsRef.once("value", snapshot => {
+                    const bannedIPs = snapshot.val();
+                    const ipKey = Object.keys(bannedIPs).find(key => bannedIPs[key] === userIP);
+                    if (ipKey) {
+                        bannedIPsRef.child(ipKey).remove().then(() => {
+                            alert("Your IP has been unbanned. Please follow the chat rules.");
+                            unbanUsed = true;
+                            document.getElementById("send-button").innerText = "Send";
+                            document.getElementById("send-button").onclick = sendMessage;
+                        });
+                    }
+                });
+            }
         }
 
         // Send message
@@ -200,22 +236,18 @@
                 return;
             }
 
-            // Moderation - Block bad words
+            // Moderation - Block bad words and patterns
             for (let word of bannedWords) {
-                if (message.toLowerCase().includes(word)) {
+                if (message.toLowerCase().includes(word) || name.toLowerCase().includes(word)) {
                     alert("Inappropriate language detected!");
-                    bannedIPsRef.push(userIP); // Ban user IP
-                    window.location.href = "about:blank"; // Redirect banned users
+                    banUser();
                     return;
                 }
             }
-
-            // Moderation - Block links
             for (let pattern of bannedPatterns) {
-                if (pattern.test(message)) {
-                    alert("Posting links is not allowed!");
-                    bannedIPsRef.push(userIP); // Ban user IP
-                    window.location.href = "about:blank"; // Redirect banned users
+                if (pattern.test(message) || pattern.test(name)) {
+                    alert("Inappropriate language or pattern detected!");
+                    banUser();
                     return;
                 }
             }
@@ -282,21 +314,29 @@
 
             if (userMessageTimestamps[userIP].length >= spamThreshold) {
                 // Ban user and delete all their messages
-                bannedIPsRef.push(userIP);
-                chatRef.orderByChild('ip').equalTo(userIP).once("value", snapshot => {
-                    snapshot.forEach(childSnapshot => {
-                        chatRef.child(childSnapshot.key).remove();
-                    });
-                });
-
-                // Notify the user about the ban
-                const chatBox = document.getElementById("chat-box");
-                const botMessageElement = document.createElement("p");
-                botMessageElement.classList.add("bot-message");
-                botMessageElement.textContent = "Bot: A user has been banned for spamming.";
-                chatBox.appendChild(botMessageElement);
-                chatBox.scrollTop = chatBox.scrollHeight;
+                banUser();
             }
+        }
+
+        // Ban user function
+        function banUser() {
+            bannedIPsRef.push(userIP);
+            chatRef.orderByChild('ip').equalTo(userIP).once("value", snapshot => {
+                snapshot.forEach(childSnapshot => {
+                    chatRef.child(childSnapshot.key).remove();
+                });
+            });
+
+            // Notify the user about the ban
+            const chatBox = document.getElementById("chat-box");
+            const botMessageElement = document.createElement("p");
+            botMessageElement.classList.add("bot-message");
+            botMessageElement.textContent = "Bot: A user has been banned.";
+            chatBox.appendChild(botMessageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Change send button to unban option
+            showUnbanOption();
         }
     </script>
 </body>
