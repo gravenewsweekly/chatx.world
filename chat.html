@@ -152,6 +152,11 @@
             "murder", "drugs", "terrorist", "kill", "selfharm","abuse","selfharm","racism", "sexually", "sexual", "pornographic"
         ];
 
+        // List of banned patterns (e.g., links)
+        const bannedPatterns = [
+            /http:\/\/|https:\/\/|www\./i // Detects any links
+        ];
+
         // Track user IP
         let userIP = "";
 
@@ -191,6 +196,16 @@
             for (let word of bannedWords) {
                 if (message.toLowerCase().includes(word)) {
                     alert("Inappropriate language detected!");
+                    bannedIPsRef.push(userIP); // Ban user IP
+                    window.location.href = "about:blank"; // Redirect banned users
+                    return;
+                }
+            }
+
+            // Moderation - Block links
+            for (let pattern of bannedPatterns) {
+                if (pattern.test(message)) {
+                    alert("Posting links is not allowed!");
                     bannedIPsRef.push(userIP); // Ban user IP
                     window.location.href = "about:blank"; // Redirect banned users
                     return;
