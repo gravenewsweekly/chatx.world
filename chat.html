@@ -84,6 +84,10 @@
             color: #808080;
             font-style: italic;
         }
+        .bot-message {
+            color: red;
+            font-weight: bold;
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -156,6 +160,10 @@
         const bannedPatterns = [
             /http:\/\/|https:\/\/|www\./i // Detects any links
         ];
+
+        // Anti-spam configuration
+        const spamThreshold = 5; // Number of messages within the time limit to consider as spam
+        const spamTimeLimit = 60000; // Time limit in milliseconds (e.g., 60 seconds)
 
         // Track user IP
         let userIP = "";
@@ -234,6 +242,9 @@
             messageElement.setAttribute("data-key", snapshot.key);
             chatBox.appendChild(messageElement);
             chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Check for spam
+            detectSpam(data.ip);
         });
 
         // Track Online Users
@@ -253,6 +264,40 @@
         }
 
         trackUserPresence();
+
+        // Anti-spam detection
+        const userMessageTimestamps = {};
+
+        function detectSpam(userIP) {
+            const currentTime = Date.now();
+
+            if (!userMessageTimestamps[userIP]) {
+                userMessageTimestamps[userIP] = [];
+            }
+
+            userMessageTimestamps[userIP].push(currentTime);
+
+            // Filter timestamps that are within the spam time limit
+            userMessageTimestamps[userIP] = userMessageTimestamps[userIP].filter(timestamp => currentTime - timestamp <= spamTimeLimit);
+
+            if (userMessageTimestamps[userIP].length >= spamThreshold) {
+                // Ban user and delete all their messages
+                bannedIPsRef.push(userIP);
+                chatRef.orderByChild('ip').equalTo(userIP).once("value", snapshot => {
+                    snapshot.forEach(childSnapshot => {
+                        chatRef.child(childSnapshot.key).remove();
+                    });
+                });
+
+                // Notify the user about the ban
+                const chatBox = document.getElementById("chat-box");
+                const botMessageElement = document.createElement("p");
+                botMessageElement.classList.add("bot-message");
+                botMessageElement.textContent = "Bot: A user has been banned for spamming.";
+                chatBox.appendChild(botMessageElement);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
     </script>
 </body>
 </html>
