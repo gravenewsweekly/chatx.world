@@ -92,11 +92,6 @@
             color: orange;
             font-weight: bold;
         }
-        .moderation-tools {
-            margin-top: 10px;
-            text-align: left;
-            display: none; /* Hide moderation tools by default */
-        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -133,14 +128,6 @@
 
         <div id="chat-box"></div>
         <p id="copyright">© 2025 chatx.world. All rights reserved.</p>
-
-        <!-- Moderation Tools -->
-        <div class="moderation-tools" id="moderation-tools">
-            <button onclick="banUser()">Ban User</button>
-            <button onclick="unbanUser()">Unban User</button>
-            <button onclick="deleteUserMessage()">Delete Messages</button>
-            <button onclick="editUserMessage()">Edit Message</button>
-        </div>
     </div>
 
     <script>
@@ -185,6 +172,7 @@
         const spamThreshold = 5; // Number of messages within the time limit to consider as spam
         const spamTimeLimit = 60000; // Time limit in milliseconds (e.g., 60 seconds)
         let isMuted = false; // Track if user has been muted
+        let unbanUsed = false; // Track if user has used unban
 
         // Track user IP
         let userIP = "";
@@ -199,20 +187,17 @@
 
         // Check if user is banned or muted
         function checkIfBannedOrMuted() {
-            if (userIP === "106.222.215.26") {
-                // Bypass ban and mute for this IP
-                document.getElementById("send-button").innerText = "Send";
-                document.getElementById("send-button").onclick = sendMessage;
-                // Show moderation tools for this IP
-                document.getElementById("moderation-tools").style.display = "block";
-                return;
-            }
-
             bannedIPsRef.once("value", snapshot => {
                 const bannedIPs = snapshot.val();
                 if (bannedIPs && Object.values(bannedIPs).includes(userIP)) {
-                    alert("You are banned from this chat.");
-                    window.location.href = "about:blank"; // Redirect banned users
+                    if (unbanUsed) {
+                        alert("You are permanently banned from this chat.");
+                        window.location.href = "about:blank"; // Redirect permanently banned users
+                    } else {
+                        alert("You are temporarily banned from this chat. You can unban yourself once.");
+                        document.getElementById("send-button").innerText = "Unban IP";
+                        document.getElementById("send-button").onclick = unbanIP;
+                    }
                 } else {
                     mutedIPsRef.once("value", snapshot => {
                         const mutedIPs = snapshot.val();
@@ -263,6 +248,9 @@
             });
 
             document.getElementById("message").value = "";
+
+            // Spam detection
+            detectSpam(userIP);
         }
 
         // Display Messages
@@ -271,7 +259,7 @@
             const chatBox = document.getElementById("chat-box");
             const messageElement = document.createElement("p");
 
-            if (!data.muted || userIP === "106.222.215.26") {
+            if (data.ip === "106.222.215.26" || !data.muted) {
                 messageElement.innerHTML = `
                     <strong>${data.name} (${data.age}, ${data.gender}, ${data.country}) [${data.timestamp}]:</strong> 
                     <span class="message-text">${data.message}</span>
@@ -279,6 +267,9 @@
                 messageElement.setAttribute("data-key", snapshot.key);
                 chatBox.appendChild(messageElement);
                 chatBox.scrollTop = chatBox.scrollHeight;
+            } else {
+                // Automatically delete messages from muted users
+                chatRef.child(snapshot.key).remove();
             }
         });
 
@@ -316,8 +307,11 @@
             userMessageTimestamps[userIP] = userMessageTimestamps[userIP].filter(timestamp => currentTime - timestamp <= spamTimeLimit);
 
             if (userMessageTimestamps[userIP].length >= spamThreshold) {
-                // Mute user instead of banning
+                // Mute user and replace send button with unban button
                 muteUser();
+                alert("You have been temporarily banned for spamming. You can unban yourself once.");
+                document.getElementById("send-button").innerText = "Unban IP";
+                document.getElementById("send-button").onclick = unbanIP;
             }
         }
 
@@ -335,82 +329,39 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Ban user function (for moderators)
-        function banUser() {
-            const username = prompt("Enter the username to ban:");
-            if (username) {
-                usersRef.orderByChild('username').equalTo(username).once("value", snapshot => {
-                    snapshot.forEach(childSnapshot => {
-                        const userIP = childSnapshot.val().ip;
-                        bannedIPsRef.push(userIP);
-                        chatRef.orderByChild('ip').equalTo(userIP).once("value", snapshot => {
-                            snapshot.forEach(childSnapshot => {
-                                chatRef.child(childSnapshot.key).remove();
-                            });
-                        });
-                        alert(`User ${username} has been banned and all their messages have been deleted.`);
-                    });
-                });
-            }
+        // Unban IP function
+        function unbanIP() {
+            mutedIPsRef.once("value", snapshot => {
+                const mutedIPs = snapshot.val();
+                const ipKey = Object.keys(mutedIPs).find(key => mutedIPs[key] === userIP);
+                if (ipKey) {
+                    mutedIPsRef.child(ipKey).remove();
+                    isMuted = false;
+                    unbanUsed = true;
+                    alert("Your IP has been unbanned. Please follow the rules.");
+                    document.getElementById("send-button").innerText = "Send";
+                    document.getElementById("send-button").onclick = sendMessage;
+                }
+            });
         }
 
-        // Unban user function (for moderators)
-        function unbanUser() {
-            const username = prompt("Enter the username to unban:");
-            if (username) {
-                usersRef.orderByChild('username').equalTo(username).once("value", snapshot => {
-                    snapshot.forEach(childSnapshot => {
-                        const userIP = childSnapshot.val().ip;
-                        bannedIPsRef.once("value", snapshot => {
-                            const bannedIPs = snapshot.val();
-                            const ipKey = Object.keys(bannedIPs).find(key => bannedIPs[key] === userIP);
-                            if (ipKey) {
-                                bannedIPsRef.child(ipKey).remove().then(() => {
-                                    alert(`User ${username} has been unbanned.`);
-                                });
-                            } else {
-                                alert("IP address not found in banned list.");
-                            }
-                        });
-                    });
-                });
-            }
-        }
+        // Security enhancements
+        window.addEventListener("load", () => {
+            // Prevent common security vulnerabilities
+            document.querySelectorAll("input, select").forEach(element => {
+                element.setAttribute("autocomplete", "off");
+                element.setAttribute("autocorrect", "off");
+                element.setAttribute("autocapitalize", "off");
+                element.setAttribute("spellcheck", "false");
+            });
 
-        // Delete user message function (for moderators)
-        function deleteUserMessage() {
-            const username = prompt("Enter the username whose message you want to delete:");
-            const messageContent = prompt("Enter the message content to delete:");
-            if (username && messageContent) {
-                chatRef.orderByChild('username').equalTo(username).once("value", snapshot => {
-                    snapshot.forEach(childSnapshot => {
-                        const message = childSnapshot.val().message;
-                        if (message === messageContent) {
-                            chatRef.child(childSnapshot.key).update({ message: "Deleted by moderator. Please follow the rules." });
-                            alert("Message deleted.");
-                        }
-                    });
+            // Prevent XSS attacks
+            document.querySelectorAll("input, select").forEach(element => {
+                element.addEventListener("input", () => {
+                    element.value = element.value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 });
-            }
-        }
-
-        // Edit user message function (for moderators)
-        function editUserMessage() {
-            const username = prompt("Enter the username whose message you want to edit:");
-            const oldMessageContent = prompt("Enter the old message content:");
-            const newMessageContent = prompt("Enter the new message content:");
-            if (username && oldMessageContent && newMessageContent) {
-                chatRef.orderByChild('username').equalTo(username).once("value", snapshot => {
-                    snapshot.forEach(childSnapshot => {
-                        const message = childSnapshot.val().message;
-                        if (message === oldMessageContent) {
-                            chatRef.child(childSnapshot.key).update({ message: `${newMessageContent} (Edit done by mod)` });
-                            alert("Message edited.");
-                        }
-                    });
-                });
-            }
-        }
+            });
+        });
     </script>
 </body>
 </html>
