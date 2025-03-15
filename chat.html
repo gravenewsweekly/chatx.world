@@ -95,6 +95,7 @@
         .moderation-tools {
             margin-top: 10px;
             text-align: left;
+            display: none; /* Hide moderation tools by default */
         }
     </style>
     <!-- Firebase SDK -->
@@ -202,8 +203,8 @@
                 // Bypass ban and mute for this IP
                 document.getElementById("send-button").innerText = "Send";
                 document.getElementById("send-button").onclick = sendMessage;
-                // Add moderation tools for this IP
-                setupModerationTools();
+                // Show moderation tools for this IP
+                document.getElementById("moderation-tools").style.display = "block";
                 return;
             }
 
@@ -334,20 +335,6 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Setup moderation tools for the specific IP address
-        function setupModerationTools() {
-            const moderationToolsContainer = document.createElement('div');
-            moderationToolsContainer.id = "moderation-tools";
-            moderationToolsContainer.innerHTML = `
-                <h3>Moderation Tools</h3>
-                <button onclick="banUser()">Ban User</button>
-                <button onclick="unbanUser()">Unban User</button>
-                <button onclick="deleteUserMessage()">Delete Messages</button>
-                <button onclick="editUserMessage()">Edit Message</button>
-            `;
-            document.body.appendChild(moderationToolsContainer);
-        }
-
         // Ban user function (for moderators)
         function banUser() {
             const username = prompt("Enter the username to ban:");
@@ -355,7 +342,7 @@
                 usersRef.orderByChild('username').equalTo(username).once("value", snapshot => {
                     snapshot.forEach(childSnapshot => {
                         const userIP = childSnapshot.val().ip;
-                        mutedIPsRef.push(userIP);
+                        bannedIPsRef.push(userIP);
                         chatRef.orderByChild('ip').equalTo(userIP).once("value", snapshot => {
                             snapshot.forEach(childSnapshot => {
                                 chatRef.child(childSnapshot.key).remove();
@@ -374,15 +361,15 @@
                 usersRef.orderByChild('username').equalTo(username).once("value", snapshot => {
                     snapshot.forEach(childSnapshot => {
                         const userIP = childSnapshot.val().ip;
-                        mutedIPsRef.once("value", snapshot => {
-                            const mutedIPs = snapshot.val();
-                            const ipKey = Object.keys(mutedIPs).find(key => mutedIPs[key] === userIP);
+                        bannedIPsRef.once("value", snapshot => {
+                            const bannedIPs = snapshot.val();
+                            const ipKey = Object.keys(bannedIPs).find(key => bannedIPs[key] === userIP);
                             if (ipKey) {
-                                mutedIPsRef.child(ipKey).remove().then(() => {
+                                bannedIPsRef.child(ipKey).remove().then(() => {
                                     alert(`User ${username} has been unbanned.`);
                                 });
                             } else {
-                                alert("IP address not found in muted list.");
+                                alert("IP address not found in banned list.");
                             }
                         });
                     });
