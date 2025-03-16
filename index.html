@@ -5,57 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatx.world - Anonymous Chat Room</title>
     <style>
-        /* Windows 98 Theme */
+        /* Windows 98 Retro Theme */
         body {
             font-family: 'Tahoma', sans-serif;
             background-color: #008080;
             color: black;
             margin: 0;
             padding: 0;
+            text-align: center;
         }
 
         .container {
-            width: 85%;
-            max-width: 920px;
+            width: 90%;
+            max-width: 900px;
             background-color: #C0C0C0;
-            margin: 20px auto;
+            margin: 30px auto;
+            padding: 20px;
             border: 3px solid #808080;
-            padding: 15px;
-            box-shadow: 5px 5px 15px #404040;
+            box-shadow: 6px 6px 12px #404040;
             border-radius: 5px;
         }
 
         header {
             background: #008080;
             color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
+            padding: 18px;
+            font-size: 26px;
             font-weight: bold;
             border-bottom: 3px solid #808080;
             letter-spacing: 1px;
+            text-shadow: 1px 1px 3px black;
         }
 
         nav {
             background-color: #A0A0A0;
-            padding: 12px;
-            text-align: center;
-            border-bottom: 3px solid #808080;
+            padding: 10px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
+            border-bottom: 3px solid #808080;
         }
 
         nav a {
             color: black;
             text-decoration: none;
             font-weight: bold;
-            padding: 10px 18px;
-            display: inline-block;
+            padding: 10px 15px;
             background-color: #D0D0D0;
             border: 2px solid #808080;
-            box-shadow: 2px 2px 5px #606060;
+            box-shadow: 2px 2px 4px #606060;
             border-radius: 3px;
             transition: all 0.2s ease-in-out;
         }
@@ -72,24 +71,26 @@
         .window-98 {
             background-color: #D0D0D0;
             border: 2px solid #808080;
-            padding: 15px;
-            margin-top: 15px;
-            box-shadow: 3px 3px 6px #606060;
-            border-radius: 4px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 4px 4px 8px #606060;
+            border-radius: 5px;
+            text-align: left;
         }
 
         .window-98 h3 {
             color: #004040;
+            margin-bottom: 10px;
         }
 
         .button-98 {
             display: inline-block;
             background: #A0A0A0;
-            padding: 10px 20px;
-            margin-top: 10px;
+            padding: 12px 25px;
+            margin-top: 12px;
             font-weight: bold;
             border: 2px solid #808080;
-            box-shadow: 2px 2px 5px #606060;
+            box-shadow: 3px 3px 6px #606060;
             cursor: pointer;
             text-align: center;
             text-decoration: none;
@@ -106,17 +107,20 @@
             border: 2px solid #808080;
             margin-top: 15px;
             box-shadow: 2px 2px 3px #606060;
-            border-radius: 3px;
+            border-radius: 5px;
+            text-align: left;
         }
 
         footer {
             background: #004040;
             color: white;
             text-align: center;
-            padding: 12px;
+            padding: 15px;
             margin-top: 20px;
             border-top: 3px solid #808080;
             font-size: 14px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
         }
 
         @media (max-width: 768px) {
@@ -131,6 +135,7 @@
 
             nav a {
                 width: 90%;
+                text-align: center;
             }
         }
     </style>
@@ -156,9 +161,9 @@
         <div class="main-content">
             <div class="window-98">
                 <h3>🌍 About Chatx.world</h3>
-                <p>Chatx.world is an <strong>anonymous chatroom</strong> designed for real-time connections in a nostalgic <strong>Windows 98-style</strong> interface. No accounts, no sign-ups—just <strong>pure chatting fun!</strong></p>
-                <p>✔ Instant messaging, ✔ Live user updates, ✔ Messages are never lost.</p>
-                <a href="chat.html" class="button-98">Enter Chat Room</a>
+                <p>Welcome to <strong>Chatx.world</strong>, the ultimate <strong>anonymous chatroom</strong> experience! Enjoy real-time messaging in a <strong>Windows 98-style</strong> interface. No accounts, no sign-ups—just <strong>pure fun and privacy!</strong></p>
+                <p>✨ Instant messaging, ✨ Live user updates, ✨ No lost messages.</p>
+                <a href="chat.html" class="button-98">💬 Enter Chat Room</a>
             </div>
 
             <div class="window-98">
@@ -166,30 +171,30 @@
                 <ul>
                     <li>✅ <strong>True Anonymity</strong> – No registration needed.</li>
                     <li>✅ <strong>Real-Time Chat</strong> – No refreshing required.</li>
-                    <li>✅ <strong>Windows 98 Retro Interface</strong> – Relive the golden era of the internet.</li>
-                    <li>✅ <strong>Safe Community</strong> – Moderated and troll-free environment.</li>
+                    <li>✅ <strong>Windows 98 Retro Interface</strong> – Nostalgic internet vibes.</li>
+                    <li>✅ <strong>Safe Community</strong> – Moderated, troll-free chat.</li>
                     <li>✅ <strong>Powered by Firebase</strong> – Fast, secure messaging.</li>
                 </ul>
-                <a href="about.html" class="button-98">Learn More</a>
+                <a href="about.html" class="button-98">📖 Learn More</a>
             </div>
 
             <div class="rules">
                 <h3>⚠️ Chat Rules</h3>
-                <p>To keep Chatx.world safe and fun, follow these rules:</p>
+                <p>For a safe and fun experience, please follow these guidelines:</p>
                 <ul>
                     <li>🚫 <strong>No hate speech, bullying, or harassment.</strong></li>
                     <li>🔞 <strong>No explicit, NSFW, or adult content.</strong></li>
-                    <li>📢 <strong>No spamming, ads, or promotions.</strong></li>
-                    <li>🔒 <strong>Do not share personal details.</strong></li>
-                    <li>⚠️ <strong>Breaking rules can result in a ban.</strong></li>
+                    <li>📢 <strong>No spamming, ads, or self-promotion.</strong></li>
+                    <li>🔒 <strong>Do not share personal information.</strong></li>
+                    <li>⚠️ <strong>Breaking the rules may result in a ban.</strong></li>
                 </ul>
-                <p>By using the chat, you accept these terms.</p>
+                <p>By using Chatx.world, you agree to these terms.</p>
             </div>
         </div>
 
         <footer>
-            © 2025 Chatx.world | Anonymous Chatroom | Nostalgic Internet Experience <br>
-            Follow us on: [Twitter] [Facebook] [Discord] (Add links later)
+            © 2025 Chatx.world | Anonymous Chatroom | Retro Internet Experience <br>
+            Follow us: [Twitter] [Facebook] [Discord] (Add links)
         </footer>
     </div>
 
