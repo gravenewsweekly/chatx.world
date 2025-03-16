@@ -154,13 +154,13 @@
 
         // List of banned words
         const bannedWords = [
-            "sex", "fuck", "bitch", "ass", "sex",
-            "porn", "xxx", "sexy", "nazi", "terror",
-            "bomb", "asshole", "asswipe", "BDSM", "online sex",
-            "daddy", "madarchod", "gaand", "rape", "violence",
-            "murder", "drugs", "terrorist", "kill", "selfharm", "abuse", "selfharm", "racism", "sexually", "sexual", "pornographic",
-            // Add more Hindi and English cuss words here
-            "chutiya", "behenchod", "bhenchod", "gandu", "maaderchod", "madarchod", "loda", "lodu", "lawde", "mc", "bc", "jhant", "randi", "lund", "saala", "sale", "suar"
+            "sex", "fuck", "bitch", "ass", "porn", "xxx", "sexy", "nazi", "terror",
+            "bomb", "asshole", "asswipe", "BDSM", "online sex", "daddy", "madarchod",
+            "gaand", "rape", "violence", "murder", "drugs", "terrorist", "kill",
+            "selfharm", "abuse", "racism", "sexually", "sexual", "pornographic",
+            "chutiya", "behenchod", "bhenchod", "gandu", "maaderchod", "madarchod",
+            "loda", "lodu", "lawde", "mc", "bc", "jhant", "randi", "lund", "saala",
+            "sale", "suar"
         ];
 
         // List of banned patterns (e.g., links)
@@ -174,7 +174,6 @@
         const spamThreshold = 5; // Number of messages within the time limit to consider as spam
         const spamTimeLimit = 60000; // Time limit in milliseconds (e.g., 60 seconds)
         let isMuted = false; // Track if user has been muted
-        let unbanUsed = false; // Track if user has used unban
 
         // Track user IP
         let userIP = "";
@@ -200,7 +199,6 @@
                         if (mutedIPs && Object.values(mutedIPs).includes(userIP)) {
                             isMuted = true;
                         }
-                        // Show the send button if the IP is not banned
                         document.getElementById("send-button").innerText = "Send";
                         document.getElementById("send-button").onclick = sendMessage;
                     });
@@ -225,14 +223,14 @@
             for (let word of bannedWords) {
                 if (message.toLowerCase().includes(word) || name.toLowerCase().includes(word)) {
                     alert("Inappropriate language detected!");
-                    banUser();
+                    banUserAndDeleteMessage();
                     return;
                 }
             }
             for (let pattern of bannedPatterns) {
                 if (pattern.test(message) || pattern.test(name)) {
                     alert("Inappropriate language or pattern detected!");
-                    banUser();
+                    banUserAndDeleteMessage();
                     return;
                 }
             }
@@ -309,18 +307,11 @@
             }
         }
 
-        // Mute user function
-        function muteUser() {
-            mutedIPsRef.push(userIP);
-            isMuted = true;
-
-            // Notify the user about the mute
-            const chatBox = document.getElementById("chat-box");
-            const botMessageElement = document.createElement("p");
-            botMessageElement.classList.add("bot-message");
-            botMessageElement.textContent = "Bot: A user has been muted.";
-            chatBox.appendChild(botMessageElement);
-            chatBox.scrollTop = chatBox.scrollHeight;
+        // Ban user and delete message function
+        function banUserAndDeleteMessage() {
+            bannedIPsRef.push(userIP);
+            alert("You have been permanently banned from this chat.");
+            window.location.href = "about:blank"; // Redirect permanently banned users
         }
 
         // Ban user function
