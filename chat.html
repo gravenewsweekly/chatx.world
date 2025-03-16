@@ -158,7 +158,9 @@
             "porn", "xxx", "sexy", "nazi", "terror",
             "bomb", "asshole", "asswipe", "BDSM", "online sex",
             "daddy", "madarchod", "gaand", "rape", "violence",
-            "murder", "drugs", "terrorist", "kill", "selfharm", "abuse", "selfharm", "racism", "sexually", "sexual", "pornographic"
+            "murder", "drugs", "terrorist", "kill", "selfharm", "abuse", "selfharm", "racism", "sexually", "sexual", "pornographic",
+            // Add more Hindi and English cuss words here
+            "chutiya", "behenchod", "bhenchod", "gandu", "maaderchod", "madarchod", "loda", "lodu", "lawde", "mc", "bc", "jhant", "randi", "lund", "saala", "sale", "suar"
         ];
 
         // List of banned patterns (e.g., links)
@@ -190,14 +192,8 @@
             bannedIPsRef.once("value", snapshot => {
                 const bannedIPs = snapshot.val();
                 if (bannedIPs && Object.values(bannedIPs).includes(userIP)) {
-                    if (unbanUsed) {
-                        alert("You are permanently banned from this chat.");
-                        window.location.href = "about:blank"; // Redirect permanently banned users
-                    } else {
-                        alert("You are temporarily banned from this chat. You can unban yourself once.");
-                        document.getElementById("send-button").innerText = "Unban IP";
-                        document.getElementById("send-button").onclick = unbanIP;
-                    }
+                    alert("You are permanently banned from this chat.");
+                    window.location.href = "about:blank"; // Redirect permanently banned users
                 } else {
                     mutedIPsRef.once("value", snapshot => {
                         const mutedIPs = snapshot.val();
@@ -229,14 +225,14 @@
             for (let word of bannedWords) {
                 if (message.toLowerCase().includes(word) || name.toLowerCase().includes(word)) {
                     alert("Inappropriate language detected!");
-                    muteUser();
+                    banUser();
                     return;
                 }
             }
             for (let pattern of bannedPatterns) {
                 if (pattern.test(message) || pattern.test(name)) {
                     alert("Inappropriate language or pattern detected!");
-                    muteUser();
+                    banUser();
                     return;
                 }
             }
@@ -259,7 +255,7 @@
             const chatBox = document.getElementById("chat-box");
             const messageElement = document.createElement("p");
 
-            if (data.ip === "106.222.215.26" || !data.muted) {
+            if (data.ip === userIP || !data.muted) {
                 messageElement.innerHTML = `
                     <strong>${data.name} (${data.age}, ${data.gender}, ${data.country}) [${data.timestamp}]:</strong> 
                     <span class="message-text">${data.message}</span>
@@ -307,11 +303,9 @@
             userMessageTimestamps[userIP] = userMessageTimestamps[userIP].filter(timestamp => currentTime - timestamp <= spamTimeLimit);
 
             if (userMessageTimestamps[userIP].length >= spamThreshold) {
-                // Mute user and replace send button with unban button
-                muteUser();
-                alert("You have been temporarily banned for spamming. You can unban yourself once.");
-                document.getElementById("send-button").innerText = "Unban IP";
-                document.getElementById("send-button").onclick = unbanIP;
+                // Ban user permanently
+                banUser();
+                alert("You have been permanently banned for spamming.");
             }
         }
 
@@ -329,20 +323,11 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Unban IP function
-        function unbanIP() {
-            mutedIPsRef.once("value", snapshot => {
-                const mutedIPs = snapshot.val();
-                const ipKey = Object.keys(mutedIPs).find(key => mutedIPs[key] === userIP);
-                if (ipKey) {
-                    mutedIPsRef.child(ipKey).remove();
-                    isMuted = false;
-                    unbanUsed = true;
-                    alert("Your IP has been unbanned. Please follow the rules.");
-                    document.getElementById("send-button").innerText = "Send";
-                    document.getElementById("send-button").onclick = sendMessage;
-                }
-            });
+        // Ban user function
+        function banUser() {
+            bannedIPsRef.push(userIP);
+            alert("You have been permanently banned from this chat.");
+            window.location.href = "about:blank"; // Redirect permanently banned users
         }
 
         // Security enhancements
