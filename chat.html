@@ -211,6 +211,12 @@
             });
         }
 
+        // Language detection function
+        function isEnglish(text) {
+            const englishPattern = /^[A-Za-z0-9.,!?'" ]+$/;
+            return englishPattern.test(text);
+        }
+
         // Send message
         function sendMessage() {
             const name = document.getElementById("username").value.trim();
@@ -238,6 +244,13 @@
                     banUserAndDeleteMessage();
                     return;
                 }
+            }
+
+            // Check if the message is in English
+            if (!isEnglish(message)) {
+                alert("Only English messages are allowed!");
+                banUserAndDeleteMessage();
+                return;
             }
 
             const time = new Date().toLocaleTimeString();
