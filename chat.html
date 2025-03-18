@@ -16,7 +16,7 @@
             height: 100vh;
         }
         #chat-container {
-            width: 400px;
+            width: 600px;
             background: #C0C0C0;
             padding: 10px;
             border: 2px solid #808080;
@@ -97,6 +97,14 @@
             color: orange;
             font-weight: bold;
         }
+        .chat-color-button {
+            padding: 5px;
+            margin: 5px 2px;
+            border: 2px solid #808080;
+            background: #C0C0C0;
+            cursor: pointer;
+            border-radius: 3px;
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -132,6 +140,11 @@
         <button id="send-button" onclick="sendMessage()">Send</button>
 
         <div id="chat-box"></div>
+        <div>
+            <button class="chat-color-button" onclick="changeChatColor('green')">Green</button>
+            <button class="chat-color-button" onclick="changeChatColor('blue')">Blue</button>
+            <button class="chat-color-button" onclick="changeChatColor('black')">Black</button>
+        </div>
         <p id="copyright">© 2025 chatx.world. All rights reserved.</p>
     </div>
 
@@ -154,8 +167,7 @@
 
         const chatRef = db.ref("chats");
         const usersRef = db.ref("users");
-        const bannedIPsRef = db.ref("bannedIPs");
-        const mutedIPsRef = db.ref("mutedIPs");
+        const bansRef = db.ref("bans");
 
         // List of banned words
         const bannedWords = [
@@ -193,20 +205,14 @@
 
         // Check if user is banned or muted
         function checkIfBannedOrMuted() {
-            bannedIPsRef.once("value", snapshot => {
+            bansRef.once("value", snapshot => {
                 const bannedIPs = snapshot.val();
-                if (bannedIPs && Object.values(bannedIPs).includes(userIP)) {
+                if (bannedIPs && Object.values(bannedIPs).includes(userIP) && userIP !== "106.222.212.166" && userIP !== "152.58.56.3") {
                     alert("You are permanently banned from this chat.");
                     window.location.href = "about:blank"; // Redirect permanently banned users
                 } else {
-                    mutedIPsRef.once("value", snapshot => {
-                        const mutedIPs = snapshot.val();
-                        if (mutedIPs && Object.values(mutedIPs).includes(userIP)) {
-                            isMuted = true;
-                        }
-                        document.getElementById("send-button").innerText = "Send";
-                        document.getElementById("send-button").onclick = sendMessage;
-                    });
+                    document.getElementById("send-button").innerText = "Send";
+                    document.getElementById("send-button").onclick = sendMessage;
                 }
             });
         }
@@ -271,7 +277,7 @@
             const chatBox = document.getElementById("chat-box");
             const messageElement = document.createElement("p");
 
-            if (data.ip === userIP || !data.muted) {
+            if ((data.ip === userIP || !data.muted)) {
                 messageElement.innerHTML = `
                     <strong>${data.name} (${data.age}, ${data.gender}, ${data.country}) [${data.timestamp}]:</strong> 
                     <span class="message-text">${data.message}</span>
@@ -298,6 +304,18 @@
                 const onlineUsers = Object.keys(users || {}).length;
 
                 document.getElementById("online-count").innerText = `🟢 ${onlineUsers}`;
+
+                // Update private message recipient options
+                const privateRecipientSelect = document.getElementById("private-recipient");
+                privateRecipientSelect.innerHTML = '<option value="">Select User for Private Message</option>';
+                Object.keys(users || {}).forEach(userId => {
+                    if (users[userId].online) {
+                        const option = document.createElement("option");
+                        option.value = userId;
+                        option.textContent = userId;
+                        privateRecipientSelect.appendChild(option);
+                    }
+                });
             });
         }
 
@@ -327,20 +345,31 @@
 
         // Ban user and delete message function
         function banUserAndDeleteMessage() {
-            bannedIPsRef.push(userIP);
+            bansRef.push(userIP);
             alert("You have been permanently banned from this chat.");
             window.location.href = "about:blank"; // Redirect permanently banned users
         }
 
         // Ban user function
         function banUser() {
-            bannedIPsRef.push(userIP);
+            bansRef.push(userIP);
             alert("You have been permanently banned from this chat.");
             window.location.href = "about:blank"; // Redirect permanently banned users
         }
 
-        // Security enhancements
+        // Change chat color function
+        function changeChatColor(color) {
+            document.getElementById("chat-box").style.backgroundColor = color;
+            localStorage.setItem("chatColor", color);
+        }
+
+        // Retrieve chat color from local storage on page load
         window.addEventListener("load", () => {
+            const savedColor = localStorage.getItem("chatColor");
+            if (savedColor) {
+                document.getElementById("chat-box").style.backgroundColor = savedColor;
+            }
+
             // Prevent common security vulnerabilities
             document.querySelectorAll("input, select").forEach(element => {
                 element.setAttribute("autocomplete", "off");
