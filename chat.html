@@ -97,7 +97,7 @@
             color: orange;
             font-weight: bold;
         }
-        .chat-color-button {
+        .chat-color-button, .theme-button, .voice-button {
             padding: 5px;
             margin: 5px 2px;
             border: 2px solid #808080;
@@ -138,12 +138,15 @@
         </select>
         <input type="text" id="message" placeholder="Type a message">
         <button id="send-button" onclick="sendMessage()">Send</button>
+        <input type="file" id="voice-note" accept="audio/*" style="display:none;">
+        <button class="voice-button" onclick="document.getElementById('voice-note').click();">Send Voice Note</button>
 
         <div id="chat-box"></div>
         <div>
             <button class="chat-color-button" onclick="changeChatColor('green')">Green</button>
             <button class="chat-color-button" onclick="changeChatColor('blue')">Blue</button>
             <button class="chat-color-button" onclick="changeChatColor('black')">Black</button>
+            <button class="theme-button" onclick="changeTheme()">Change Theme</button>
         </div>
         <p id="copyright">© 2025 chatx.world. All rights reserved.</p>
     </div>
@@ -164,7 +167,6 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
         const chatRef = db.ref("chats");
         const usersRef = db.ref("users");
         const bansRef = db.ref("bans");
@@ -218,9 +220,10 @@
         }
 
         // Language detection function
-        function isEnglish(text) {
+        function isEnglishOrHindi(text) {
             const englishPattern = /^[A-Za-z0-9.,!?'" ]+$/;
-            return englishPattern.test(text);
+            const hindiPattern = /^[\u0900-\u097F0-9.,!?'" ]+$/;
+            return englishPattern.test(text) || hindiPattern.test(text);
         }
 
         // Send message
@@ -252,9 +255,9 @@
                 }
             }
 
-            // Check if the message is in English
-            if (!isEnglish(message)) {
-                alert("Only English messages are allowed!");
+            // Check if the message is in English or Hindi
+            if (!isEnglishOrHindi(message)) {
+                alert("Only English and Hindi messages are allowed!");
                 banUserAndDeleteMessage();
                 return;
             }
@@ -363,11 +366,23 @@
             localStorage.setItem("chatColor", color);
         }
 
-        // Retrieve chat color from local storage on page load
+        // Change theme function
+        function changeTheme() {
+            const currentTheme = document.body.style.backgroundColor;
+            document.body.style.backgroundColor = currentTheme === "#008080" ? "#000080" : "#008080";
+            localStorage.setItem("themeColor", document.body.style.backgroundColor);
+        }
+
+        // Retrieve chat color and theme from local storage on page load
         window.addEventListener("load", () => {
             const savedColor = localStorage.getItem("chatColor");
             if (savedColor) {
                 document.getElementById("chat-box").style.backgroundColor = savedColor;
+            }
+
+            const savedTheme = localStorage.getItem("themeColor");
+            if (savedTheme) {
+                document.body.style.backgroundColor = savedTheme;
             }
 
             // Prevent common security vulnerabilities
