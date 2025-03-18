@@ -97,7 +97,7 @@
             color: orange;
             font-weight: bold;
         }
-        .chat-color-button, .theme-button, .voice-button {
+        .chat-color-button {
             padding: 5px;
             margin: 5px 2px;
             border: 2px solid #808080;
@@ -113,9 +113,9 @@
 <body>
     <div id="chat-container">
         <h2>Windows 98 Chat Room</h2>
-        <p>Online Users: <span id="online-count" class="online-indicator">🟢 0</span></p>
+        <p>Online Users: <span id="online-count" class="online-indicator">🔵 0</span></p>
         <div id="online-users" class="user-list"></div>
-
+    
         <input type="text" id="username" placeholder="Enter your name">
         <select id="gender">
             <option value="">Select Gender</option>
@@ -138,15 +138,13 @@
         </select>
         <input type="text" id="message" placeholder="Type a message">
         <button id="send-button" onclick="sendMessage()">Send</button>
-        <input type="file" id="voice-note" accept="audio/*" style="display:none;">
-        <button class="voice-button" onclick="document.getElementById('voice-note').click();">Send Voice Note</button>
 
         <div id="chat-box"></div>
         <div>
             <button class="chat-color-button" onclick="changeChatColor('green')">Green</button>
             <button class="chat-color-button" onclick="changeChatColor('blue')">Blue</button>
             <button class="chat-color-button" onclick="changeChatColor('black')">Black</button>
-            <button class="theme-button" onclick="changeTheme()">Change Theme</button>
+            <!-- Removed "Change theme" button -->
         </div>
         <p id="copyright">© 2025 chatx.world. All rights reserved.</p>
     </div>
@@ -306,7 +304,7 @@
                 const users = snapshot.val();
                 const onlineUsers = Object.keys(users || {}).length;
 
-                document.getElementById("online-count").innerText = `🟢 ${onlineUsers}`;
+                document.getElementById("online-count").innerText = `🌍 ${onlineUsers}`;
 
                 // Update private message recipient options
                 const privateRecipientSelect = document.getElementById("private-recipient");
@@ -340,8 +338,8 @@
             userMessageTimestamps[userIP] = userMessageTimestamps[userIP].filter(timestamp => currentTime - timestamp <= spamTimeLimit);
 
             if (userMessageTimestamps[userIP].length >= spamThreshold) {
-                // Ban user permanently
-                banUser();
+                // Ban user permanently and delete all their messages
+                banUserAndDeleteAllMessages();
                 alert("You have been permanently banned for spamming.");
             }
         }
@@ -349,6 +347,7 @@
         // Ban user and delete message function
         function banUserAndDeleteMessage() {
             bansRef.push(userIP);
+            deleteAllMessagesOfBannedUser(userIP);
             alert("You have been permanently banned from this chat.");
             window.location.href = "about:blank"; // Redirect permanently banned users
         }
@@ -364,6 +363,15 @@
         function changeChatColor(color) {
             document.getElementById("chat-box").style.backgroundColor = color;
             localStorage.setItem("chatColor", color);
+        }
+
+        // Function to automatically delete all messages of a banned user
+        function deleteAllMessagesOfBannedUser(userIP) {
+            chatRef.orderByChild('ip').equalTo(userIP).once('value', snapshot => {
+                snapshot.forEach(childSnapshot => {
+                    chatRef.child(childSnapshot.key).remove();
+                });
+            });
         }
 
         // Change theme function
