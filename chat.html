@@ -105,6 +105,10 @@
             cursor: pointer;
             border-radius: 3px;
         }
+        .moderator-message {
+            color: blue;
+            font-weight: bold;
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -144,7 +148,6 @@
             <button class="chat-color-button" onclick="changeChatColor('green')">Green</button>
             <button class="chat-color-button" onclick="changeChatColor('blue')">Blue</button>
             <button class="chat-color-button" onclick="changeChatColor('black')">Black</button>
-            <!-- Removed "Change theme" button -->
         </div>
         <p id="copyright">© 2025 chatx.world. All rights reserved.</p>
     </div>
@@ -168,8 +171,10 @@
         const chatRef = db.ref("chats");
         const usersRef = db.ref("users");
         const bansRef = db.ref("bans");
+        const warningsRef = db.ref("warnings");
+        const moderationLogRef = db.ref("moderationLog");
 
-        // List of banned words
+        // Enhanced list of banned words and phrases
         const bannedWords = [
             "sex", "fuck", "bitch", "ass", "porn", "xxx", "sexy", "nazi", "terror",
             "bomb", "asshole", "asswipe", "BDSM", "online sex", "daddy", "madarchod",
@@ -177,30 +182,52 @@
             "selfharm", "abuse", "racism", "sexually", "sexual", "pornographic",
             "chutiya", "behenchod", "bhenchod", "gandu", "maaderchod", "madarchod",
             "loda", "lodu", "lawde", "mc", "bc", "jhant", "randi", "lund", "saala",
-            "sale", "suar", "shit", "shgsjsb"
+            "sale", "suar", "shit", "shgsjsb", "nude", "dick", "cock", "pussy", 
+            "vagina", "penis", "hentai", "incest", "pedo", "child porn", "cp", 
+            "hitler", "islamist", "jihad", "slut", "whore", "prostitute", "anal",
+            "blowjob", "handjob", "cum", "sperm", "orgasm", "masterbate", "jack off",
+            "ejaculate", "erection", "fetish", "orgy", "voyeur", "bestiality", "zoophilia",
+            "scat", "fisting", "sadism", "masochism", "bdsm", "bondage", "dominatrix",
+            "swastika", "kkk", "white power", "black power", "nigger", "nigga", "chink",
+            "spic", "wetback", "kike", "retard", "autist", "down syndrome", "suicide",
+            "hang myself", "kill myself", "cut myself", "self harm", "anorexia", "bulimia"
         ];
 
-        // List of banned patterns (e.g., links)
-        const bannedPatterns = [
+        // List of suspicious patterns (e.g., links, personal info)
+        const suspiciousPatterns = [
             /http:\/\/|https:\/\/|www\./i, // Detects any links
             /\b\d{10}\b/, // Detects phone numbers
-            /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/ // Detects email addresses
+            /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/, // Detects email addresses
+            /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/, // IP addresses
+            /\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/, // Credit card numbers
+            /[<>]/ // HTML tags
         ];
 
         // Anti-spam configuration
         const spamThreshold = 5; // Number of messages within the time limit to consider as spam
         const spamTimeLimit = 60000; // Time limit in milliseconds (e.g., 60 seconds)
+        const warningThreshold = 3; // Number of warnings before ban
         let isMuted = false; // Track if user has been muted
+        let userWarnings = 0; // Track user warnings
 
         // Track user IP
         let userIP = "";
+        let userId = "";
 
-        // Fetch user IP
+        // Fetch user IP and initialize
         fetch("https://api.ipify.org?format=json")
             .then(response => response.json())
             .then(data => {
                 userIP = data.ip;
+                userId = `user_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`;
                 checkIfBannedOrMuted();
+                trackUserPresence();
+            })
+            .catch(error => {
+                console.error("Error fetching IP:", error);
+                userIP = "unknown";
+                userId = `user_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`;
+                trackUserPresence();
             });
 
         // Check if user is banned or muted
@@ -211,6 +238,21 @@
                     alert("You are permanently banned from this chat.");
                     window.location.href = "about:blank"; // Redirect permanently banned users
                 } else {
+                    // Check for warnings
+                    warningsRef.orderByChild('ip').equalTo(userIP).once('value', warningSnapshot => {
+                        if (warningSnapshot.exists()) {
+                            const warnings = warningSnapshot.val();
+                            userWarnings = Object.keys(warnings).length;
+                            
+                            if (userWarnings >= warningThreshold) {
+                                banUser("Exceeded warning threshold");
+                                return;
+                            }
+                            
+                            alert(`You have ${userWarnings} warning(s). ${warningThreshold - userWarnings} more warnings will result in a ban.`);
+                        }
+                    });
+                    
                     document.getElementById("send-button").innerText = "Send";
                     document.getElementById("send-button").onclick = sendMessage;
                 }
@@ -222,6 +264,68 @@
             const englishPattern = /^[A-Za-z0-9.,!?'" ]+$/;
             const hindiPattern = /^[\u0900-\u097F0-9.,!?'" ]+$/;
             return englishPattern.test(text) || hindiPattern.test(text);
+        }
+
+        // Advanced content moderation
+        function moderateContent(text, username) {
+            // Check for banned words
+            const lowerText = text.toLowerCase();
+            const lowerUsername = username.toLowerCase();
+            
+            for (let word of bannedWords) {
+                if (lowerText.includes(word) || lowerUsername.includes(word)) {
+                    return {
+                        allowed: false,
+                        reason: "Inappropriate language detected",
+                        severity: "high"
+                    };
+                }
+            }
+            
+            // Check for suspicious patterns
+            for (let pattern of suspiciousPatterns) {
+                if (pattern.test(text) || pattern.test(username)) {
+                    return {
+                        allowed: false,
+                        reason: "Suspicious pattern detected",
+                        severity: "medium"
+                    };
+                }
+            }
+            
+            // Check if the message is in English or Hindi
+            if (!isEnglishOrHindi(text) || !isEnglishOrHindi(username)) {
+                return {
+                    allowed: false,
+                    reason: "Only English and Hindi messages are allowed",
+                    severity: "low"
+                };
+            }
+            
+            // Check for excessive capitalization (shouting)
+            const upperCaseRatio = (text.replace(/[^A-Z]/g, '').length / text.length);
+            if (upperCaseRatio > 0.7 && text.length > 10) {
+                return {
+                    allowed: false,
+                    reason: "Excessive capitalization detected",
+                    severity: "low"
+                };
+            }
+            
+            // Check for repetitive characters
+            if (/(.)\1{5,}/.test(text)) {
+                return {
+                    allowed: false,
+                    reason: "Repetitive characters detected",
+                    severity: "low"
+                };
+            }
+            
+            return {
+                allowed: true,
+                reason: "",
+                severity: ""
+            };
         }
 
         // Send message
@@ -237,33 +341,33 @@
                 return;
             }
 
-            // Moderation - Block bad words and patterns
-            for (let word of bannedWords) {
-                if (message.toLowerCase().includes(word) || name.toLowerCase().includes(word)) {
-                    alert("Inappropriate language detected!");
-                    banUserAndDeleteMessage();
-                    return;
+            // Content moderation
+            const moderationResult = moderateContent(message, name);
+            if (!moderationResult.allowed) {
+                alert(`Message blocked: ${moderationResult.reason}`);
+                
+                // Log moderation action
+                logModerationAction({
+                    type: "message_blocked",
+                    reason: moderationResult.reason,
+                    severity: moderationResult.severity,
+                    username: name,
+                    ip: userIP,
+                    message: message
+                });
+                
+                // Issue warning for medium/high severity violations
+                if (moderationResult.severity === "medium" || moderationResult.severity === "high") {
+                    issueWarning(userIP, name, moderationResult.reason);
                 }
-            }
-            for (let pattern of bannedPatterns) {
-                if (pattern.test(message) || pattern.test(name)) {
-                    alert("Inappropriate language or pattern detected!");
-                    banUserAndDeleteMessage();
-                    return;
-                }
-            }
-
-            // Check if the message is in English or Hindi
-            if (!isEnglishOrHindi(message)) {
-                alert("Only English and Hindi messages are allowed!");
-                banUserAndDeleteMessage();
+                
                 return;
             }
 
             const time = new Date().toLocaleTimeString();
 
             chatRef.push({
-                name, gender, age, country, message, timestamp: time, ip: userIP, muted: isMuted
+                name, gender, age, country, message, timestamp: time, ip: userIP, userId, muted: isMuted
             });
 
             document.getElementById("message").value = "";
@@ -284,6 +388,15 @@
                     <span class="message-text">${data.message}</span>
                 `;
                 messageElement.setAttribute("data-key", snapshot.key);
+                messageElement.setAttribute("data-userid", data.userId);
+                messageElement.setAttribute("data-ip", data.ip);
+                
+                // Add context menu for moderation
+                messageElement.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    showModerationMenu(e, snapshot.key, data.userId, data.ip, data.name);
+                });
+                
                 chatBox.appendChild(messageElement);
                 chatBox.scrollTop = chatBox.scrollHeight;
             } else {
@@ -292,122 +405,91 @@
             }
         });
 
-        // Track Online Users
-        function trackUserPresence() {
-            const userId = `user_${Math.random().toString(36).substr(2, 9)}`;
-            const userRef = usersRef.child(userId);
+        // Context menu for moderation
+        function showModerationMenu(event, messageKey, userId, userIP, username) {
+            // Remove any existing menu
+            const existingMenu = document.getElementById('moderation-menu');
+            if (existingMenu) {
+                existingMenu.remove();
+            }
+            
+            // Create menu
+            const menu = document.createElement('div');
+            menu.id = 'moderation-menu';
+            menu.style.position = 'absolute';
+            menu.style.left = event.pageX + 'px';
+            menu.style.top = event.pageY + 'px';
+            menu.style.background = '#C0C0C0';
+            menu.style.border = '2px solid #808080';
+            menu.style.padding = '5px';
+            menu.style.zIndex = '1000';
+            
+            // Menu options
+            menu.innerHTML = `
+                <div style="margin-bottom: 5px;"><strong>Moderation Options</strong></div>
+                <button style="width: 100%; margin-bottom: 2px;" onclick="deleteMessage('${messageKey}')">Delete Message</button>
+                <button style="width: 100%; margin-bottom: 2px;" onclick="warnUser('${userIP}', '${username}', 'Manual warning')">Warn User</button>
+                <button style="width: 100%; margin-bottom: 2px;" onclick="muteUser('${userIP}', '${username}')">Mute User</button>
+                <button style="width: 100%;" onclick="banUserIP('${userIP}', '${username}', 'Manual ban')">Ban User</button>
+            `;
+            
+            document.body.appendChild(menu);
+            
+            // Close menu when clicking elsewhere
+            const closeMenu = function() {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            };
+            
+            setTimeout(() => {
+                document.addEventListener('click', closeMenu);
+            }, 100);
+        }
 
-            userRef.set({ online: true });
-            userRef.onDisconnect().remove();
-
-            usersRef.on("value", snapshot => {
-                const users = snapshot.val();
-                const onlineUsers = Object.keys(users || {}).length;
-
-                document.getElementById("online-count").innerText = `🌍 ${onlineUsers}`;
-
-                // Update private message recipient options
-                const privateRecipientSelect = document.getElementById("private-recipient");
-                privateRecipientSelect.innerHTML = '<option value="">Select User for Private Message</option>';
-                Object.keys(users || {}).forEach(userId => {
-                    if (users[userId].online) {
-                        const option = document.createElement("option");
-                        option.value = userId;
-                        option.textContent = userId;
-                        privateRecipientSelect.appendChild(option);
-                    }
-                });
+        // Delete message function
+        function deleteMessage(messageKey) {
+            chatRef.child(messageKey).remove();
+            
+            // Add deletion notice
+            const chatBox = document.getElementById("chat-box");
+            const deletionNotice = document.createElement("p");
+            deletionNotice.innerHTML = `<span class="bot-message">[SYSTEM] A message has been deleted by moderation.</span>`;
+            chatBox.appendChild(deletionNotice);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            logModerationAction({
+                type: "message_deleted",
+                moderator: "user",
+                messageKey: messageKey
             });
         }
 
-        trackUserPresence();
-
-        // Anti-spam detection
-        const userMessageTimestamps = {};
-
-        function detectSpam(userIP) {
-            const currentTime = Date.now();
-
-            if (!userMessageTimestamps[userIP]) {
-                userMessageTimestamps[userIP] = [];
-            }
-
-            userMessageTimestamps[userIP].push(currentTime);
-
-            // Filter timestamps that are within the spam time limit
-            userMessageTimestamps[userIP] = userMessageTimestamps[userIP].filter(timestamp => currentTime - timestamp <= spamTimeLimit);
-
-            if (userMessageTimestamps[userIP].length >= spamThreshold) {
-                // Ban user permanently and delete all their messages
-                banUserAndDeleteAllMessages();
-                alert("You have been permanently banned for spamming.");
-            }
-        }
-
-        // Ban user and delete message function
-        function banUserAndDeleteMessage() {
-            bansRef.push(userIP);
-            deleteAllMessagesOfBannedUser(userIP);
-            alert("You have been permanently banned from this chat.");
-            window.location.href = "about:blank"; // Redirect permanently banned users
-        }
-
-        // Ban user function
-        function banUser() {
-            bansRef.push(userIP);
-            alert("You have been permanently banned from this chat.");
-            window.location.href = "about:blank"; // Redirect permanently banned users
-        }
-
-        // Change chat color function
-        function changeChatColor(color) {
-            document.getElementById("chat-box").style.backgroundColor = color;
-            localStorage.setItem("chatColor", color);
-        }
-
-        // Function to automatically delete all messages of a banned user
-        function deleteAllMessagesOfBannedUser(userIP) {
-            chatRef.orderByChild('ip').equalTo(userIP).once('value', snapshot => {
-                snapshot.forEach(childSnapshot => {
-                    chatRef.child(childSnapshot.key).remove();
-                });
+        // Warn user function
+        function warnUser(ip, username, reason) {
+            warningsRef.push({
+                ip: ip,
+                username: username,
+                reason: reason,
+                timestamp: new Date().toLocaleString()
             });
-        }
-
-        // Change theme function
-        function changeTheme() {
-            const currentTheme = document.body.style.backgroundColor;
-            document.body.style.backgroundColor = currentTheme === "#008080" ? "#000080" : "#008080";
-            localStorage.setItem("themeColor", document.body.style.backgroundColor);
-        }
-
-        // Retrieve chat color and theme from local storage on page load
-        window.addEventListener("load", () => {
-            const savedColor = localStorage.getItem("chatColor");
-            if (savedColor) {
-                document.getElementById("chat-box").style.backgroundColor = savedColor;
-            }
-
-            const savedTheme = localStorage.getItem("themeColor");
-            if (savedTheme) {
-                document.body.style.backgroundColor = savedTheme;
-            }
-
-            // Prevent common security vulnerabilities
-            document.querySelectorAll("input, select").forEach(element => {
-                element.setAttribute("autocomplete", "off");
-                element.setAttribute("autocorrect", "off");
-                element.setAttribute("autocapitalize", "off");
-                element.setAttribute("spellcheck", "false");
+            
+            // Add warning notice
+            const chatBox = document.getElementById("chat-box");
+            const warningNotice = document.createElement("p");
+            warningNotice.innerHTML = `<span class="warning-message">[MODERATION] User ${username} has been warned for: ${reason}</span>`;
+            chatBox.appendChild(warningNotice);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            logModerationAction({
+                type: "user_warned",
+                username: username,
+                ip: ip,
+                reason: reason
             });
-
-            // Prevent XSS attacks
-            document.querySelectorAll("input, select").forEach(element => {
-                element.addEventListener("input", () => {
-                    element.value = element.value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                });
-            });
-        });
-    </script>
-</body>
-</html>
+            
+            // Check if user should be banned based on warnings
+            warningsRef.orderByChild('ip').equalTo(ip).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    const warnings = snapshot.val();
+                    if (Object.keys(warnings).length >= warningThreshold) {
+                        banUserIP(ip, username, "Exceeded warning thres
